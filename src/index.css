@@ -14,24 +14,27 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 45% 12%;
 
-    --primary: 221 83% 53%;
+    /* Primary: Dark Blue (0, 51, 102) */
+    --primary: 210 100% 20%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 14% 96%;
+    /* Secondary: Light Blue (189, 215, 238) */
+    --secondary: 206 65% 84%;
     --secondary-foreground: 220 45% 12%;
+
+    /* Accent: Green (5, 91, 73) */
+    --accent: 165 89% 19%;
+    --accent-foreground: 210 40% 98%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 220 25% 40%;
-
-    --accent: 221 83% 53%;
-    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 221 83% 53%;
+    --ring: 210 100% 20%;
 
     --radius: 0.5rem;
   }
@@ -67,6 +70,18 @@
   
   .link-hover {
     @apply relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-full after:origin-bottom-right after:scale-x-0 after:bg-primary after:transition-transform after:duration-300 hover:after:origin-bottom-left hover:after:scale-x-100;
+  }
+
+  .table-header {
+    @apply bg-primary text-primary-foreground font-medium py-2 px-4;
+  }
+
+  .table-row-even {
+    @apply bg-white;
+  }
+
+  .table-row-odd {
+    @apply bg-secondary/30;
   }
 }
 
