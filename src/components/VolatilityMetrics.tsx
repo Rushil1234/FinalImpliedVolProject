@@ -1,38 +1,43 @@
 
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  LineChart, Line, Legend, ComposedChart, Area
+} from 'recharts';
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent,
+} from '@/components/ui/chart';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { 
+  ImpliedVolatilityData, 
+  HistoricalVolatilityData, 
+  MonteCarloData,
+  VolatilityComparisonData
+} from '@/utils/flaskConnector';
 
 interface VolatilityMetricsProps {
   className?: string;
+  impliedVolatilityData: ImpliedVolatilityData[];
+  historicalVolatilityData: HistoricalVolatilityData[];
+  monteCarloData: MonteCarloData[];
+  volatilityComparisonData: VolatilityComparisonData[];
+  stockPrice: number;
+  isLoading: boolean;
 }
 
-const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
-  const [loading, setLoading] = useState(true);
-  
-  // Mock data - to be replaced with data from Flask backend
-  const impliedVolatilityData = [
-    { name: '2025-04-17', value: 28.26, movement: 44.97, label: 'Nearest' },
-    { name: '2025-08-15', value: 23.82, movement: 96.31, label: '~3 Months' },
-    { name: '2025-12-19', value: 19.60, movement: 108.86, label: '~6 Months' },
-    { name: '2025-12-19', value: 19.60, movement: 108.86, label: '~1 Year' },
-  ];
-  
-  const historicalVolatilityData = [
-    { period: '30-Day', value: 33.04, movement: 73.91 },
-    { period: '1-Year', value: 26.90, movement: 174.38 },
-  ];
-
-  useEffect(() => {
-    // Simulate loading data from backend
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
+const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ 
+  className, 
+  impliedVolatilityData, 
+  historicalVolatilityData,
+  monteCarloData,
+  volatilityComparisonData,
+  stockPrice,
+  isLoading
+}) => {
   const loadingAnimation = (
     <div className="w-full h-full flex flex-col gap-4 animate-pulse">
       <div className="h-8 w-3/4 bg-secondary rounded-md"></div>
@@ -46,7 +51,7 @@ const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
 
   return (
     <div className={cn("w-full space-y-8", className)}>
-      {loading ? (
+      {isLoading ? (
         loadingAnimation
       ) : (
         <>
@@ -55,6 +60,7 @@ const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
             <p className="text-muted-foreground animate-fade-in">Options analytics data from different time horizons</p>
           </div>
           
+          {/* Implied Volatility Bar Chart */}
           <Card className="animate-fade-in">
             <CardHeader>
               <CardTitle>Implied Volatility</CardTitle>
@@ -92,8 +98,8 @@ const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
                       }}
                     />
                     <Bar 
-                      dataKey="value" 
-                      fill="rgba(59, 130, 246, 0.8)" 
+                      dataKey="volatility" 
+                      fill="rgba(0, 51, 102, 0.8)" 
                       radius={[4, 4, 0, 0]} 
                       animationDuration={1500}
                     />
@@ -106,9 +112,9 @@ const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
                   <div key={index} className="space-y-2 p-4 rounded-lg bg-secondary/30">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium">{item.label}</p>
-                      <span className="text-xs text-muted-foreground">{item.name}</span>
+                      <span className="text-xs text-muted-foreground">{item.date}</span>
                     </div>
-                    <p className="metric-value text-primary">{item.value}%</p>
+                    <p className="metric-value text-primary">{item.volatility}%</p>
                     <p className="text-sm text-muted-foreground">
                       Expected ±${item.movement}
                     </p>
@@ -118,26 +124,201 @@ const VolatilityMetrics: React.FC<VolatilityMetricsProps> = ({ className }) => {
             </CardContent>
           </Card>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
-            {historicalVolatilityData.map((item, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{item.period} Historical Volatility</span>
-                    <span className="metric-value text-primary">{item.value}%</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      Average stock movement:
+          {/* Monte Carlo Simulation Chart */}
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle>Monte Carlo Price Predictions</CardTitle>
+              <CardDescription>
+                Simulated price trajectories over time based on volatility
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart
+                    data={monteCarloData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="timestamp" />
+                    <YAxis domain={['auto', 'auto']} />
+                    <Tooltip />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="upper95"
+                      stroke="none"
+                      fill="rgba(189, 215, 238, 0.6)"
+                      name="95% Confidence"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="lower05"
+                      stroke="none"
+                      fill="transparent"
+                      name="5% Confidence"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="median"
+                      stroke="rgba(5, 91, 73, 1)"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      name="Median Price"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Historical vs Implied Volatility Chart */}
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle>Historical vs Implied Volatility</CardTitle>
+              <CardDescription>
+                Comparison of past realized volatility against market expectations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={volatilityComparisonData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" />
+                    <YAxis tickFormatter={(value) => `${value}%`} />
+                    <Tooltip formatter={(value: number) => [`${value}%`, '']} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="implied"
+                      stroke="rgba(0, 51, 102, 1)"
+                      strokeWidth={2}
+                      name="Implied Vol"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="historical"
+                      stroke="rgba(5, 91, 73, 1)"
+                      strokeWidth={2}
+                      name="Historical Vol"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Historical Volatility Bar Chart */}
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle>Historical Volatility</CardTitle>
+              <CardDescription>
+                Realized volatility calculated from past price data
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={historicalVolatilityData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="period" />
+                    <YAxis tickFormatter={(value) => `${value}%`} />
+                    <Tooltip formatter={(value: number) => [`${value}%`, 'HV']} />
+                    <Bar
+                      dataKey="volatility"
+                      fill="rgba(5, 91, 73, 0.8)"
+                      radius={[4, 4, 0, 0]}
+                      name="Historical Vol"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                {historicalVolatilityData.map((item, index) => (
+                  <div key={index} className="space-y-2 p-4 rounded-lg bg-secondary/30">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">{item.period} Historical Vol</p>
+                      <p className="metric-value text-primary">{item.volatility}%</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Average stock movement: <span className="font-semibold">±${item.movement}</span>
                     </p>
-                    <p className="text-xl font-semibold">±${item.movement}</p>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Metrics Tables */}
+          <Card className="animate-fade-in">
+            <CardHeader>
+              <CardTitle>Volatility Metrics Tables</CardTitle>
+              <CardDescription>Detailed metrics for analysis</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Implied Volatility Metrics</h3>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[180px]">Expiration Date</TableHead>
+                          <TableHead>Strike</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Implied Volatility</TableHead>
+                          <TableHead className="text-right">Expected Movement</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {impliedVolatilityData.map((row, i) => (
+                          <TableRow key={i} className={i % 2 === 0 ? "bg-muted/50" : ""}>
+                            <TableCell>{row.date}</TableCell>
+                            <TableCell>${row.strike.toFixed(1)}</TableCell>
+                            <TableCell>{row.type}</TableCell>
+                            <TableCell>{row.volatility}%</TableCell>
+                            <TableCell className="text-right">±${row.movement}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Historical Volatility Metrics</h3>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[180px]">Period</TableHead>
+                          <TableHead>Historical Volatility</TableHead>
+                          <TableHead className="text-right">Avg. Movement</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {historicalVolatilityData.map((row, i) => (
+                          <TableRow key={i} className={i % 2 === 0 ? "bg-muted/50" : ""}>
+                            <TableCell>{row.period}</TableCell>
+                            <TableCell>{row.volatility}%</TableCell>
+                            <TableCell className="text-right">±${row.movement}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
