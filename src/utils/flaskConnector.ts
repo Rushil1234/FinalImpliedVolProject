@@ -1,4 +1,3 @@
-
 /**
  * Flask API Connector
  * 
@@ -52,6 +51,29 @@ export interface VolatilityMetricsData {
   historicalVolatility: HistoricalVolatilityData[];
   monteCarloSimulation: MonteCarloData[];
   volatilityComparison: VolatilityComparisonData[];
+}
+
+export interface ImpliedVolatilityTableData {
+  expirationDate: string;
+  strikePrice: number;
+  optionType: string;
+  impliedVolatility: number;
+}
+
+export interface PriceMovementData {
+  expirationDate: string;
+  expectedPriceMovement: number;
+}
+
+export interface SimulationData {
+  date: string;
+  [key: string]: string | number;
+}
+
+export interface RawVolatilityData {
+  impliedVolatilityTable: ImpliedVolatilityTableData[];
+  expectedPriceMovement: PriceMovementData[];
+  monteCarloSimulations: SimulationData[];
 }
 
 /**
@@ -130,6 +152,76 @@ export const fetchVolatilityMetrics = async (ticker: string): Promise<Volatility
 };
 
 /**
+ * Fetches raw volatility data tables from the Flask backend
+ */
+export const fetchRawVolatilityData = async (): Promise<RawVolatilityData> => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/raw-volatility-data`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching raw volatility data:', error);
+    
+    // Return mock data if backend is not available
+    return {
+      impliedVolatilityTable: [
+        { expirationDate: '2025-03-28', strikePrice: 222.5, optionType: 'c', impliedVolatility: 22.51 },
+        { expirationDate: '2025-06-20', strikePrice: 220.0, optionType: 'c', impliedVolatility: 28.95 },
+        { expirationDate: '2025-09-19', strikePrice: 220.0, optionType: 'c', impliedVolatility: 29.70 },
+        { expirationDate: '2026-03-20', strikePrice: 220.0, optionType: 'c', impliedVolatility: 30.25 }
+      ],
+      expectedPriceMovement: [
+        { expirationDate: '2025-03-28', expectedPriceMovement: 5.84 },
+        { expirationDate: '2025-06-20', expectedPriceMovement: 31.17 },
+        { expirationDate: '2025-09-19', expectedPriceMovement: 45.87 },
+        { expirationDate: '2026-03-20', expectedPriceMovement: 66.54 }
+      ],
+      monteCarloSimulations: generateMockSimulationData()
+    };
+  }
+};
+
+// Helper function to generate mock simulation data for testing
+const generateMockSimulationData = (): SimulationData[] => {
+  const simulationData: SimulationData[] = [];
+  const startDate = new Date('2025-03-26');
+  const startPrice = 221.81;
+  
+  // Create 90 days of simulation data
+  for (let i = 0; i < 90; i++) {
+    const currentDate = new Date(startDate);
+    currentDate.setDate(startDate.getDate() + i);
+    
+    const dateString = currentDate.toISOString().split('T')[0];
+    const row: SimulationData = { date: dateString };
+    
+    // Generate 6 simulations
+    for (let sim = 1; sim <= 6; sim++) {
+      // On day 0, all simulations start at the same price
+      if (i === 0) {
+        row[`Simulation ${sim}`] = startPrice;
+        continue;
+      }
+      
+      // Get yesterday's price for this simulation
+      const yesterdayPrice = simulationData[i - 1][`Simulation ${sim}`] as number;
+      
+      // Random daily return between -3% and +3%
+      const dailyReturn = (Math.random() * 0.06) - 0.03;
+      row[`Simulation ${sim}`] = yesterdayPrice * (1 + dailyReturn);
+    }
+    
+    simulationData.push(row);
+  }
+  
+  return simulationData;
+};
+
+/**
  * To connect this frontend to your Flask backend:
  * 
  * 1. Set up a Flask server with CORS enabled:
@@ -168,6 +260,24 @@ export const fetchVolatilityMetrics = async (ticker: string): Promise<Volatility
  *            'historicalVolatility': [...],
  *            'monteCarloSimulation': [...],
  *            'volatilityComparison': [...]
+ *        })
+ *    
+ *    @app.route('/api/raw-volatility-data')
+ *    def get_raw_volatility_data():
+ *        # Return raw data tables
+ *        return jsonify({
+ *            'impliedVolatilityTable': [
+ *                {'expirationDate': '2025-03-28', 'strikePrice': 222.5, 'optionType': 'c', 'impliedVolatility': 22.51},
+ *                # More data...
+ *            ],
+ *            'expectedPriceMovement': [
+ *                {'expirationDate': '2025-03-28', 'expectedPriceMovement': 5.84},
+ *                # More data...
+ *            ],
+ *            'monteCarloSimulations': [
+ *                {'date': '2025-03-26', 'Simulation 1': 221.81, 'Simulation 2': 221.81, ...},
+ *                # More data...
+ *            ]
  *        })
  *    
  *    if __name__ == '__main__':

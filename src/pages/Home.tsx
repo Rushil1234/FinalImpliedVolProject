@@ -6,7 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, FileUp, TrendingUp } from 'lucide-react';
+import { Search, FileUp, TrendingUp, Table } from 'lucide-react';
 
 const Home = () => {
   const [ticker, setTicker] = useState('');
@@ -95,8 +95,8 @@ const Home = () => {
                   className="w-full" 
                   onClick={goToDataInput}
                 >
-                  <FileUp className="mr-2 h-4 w-4" />
-                  Input Custom Data
+                  <Table className="mr-2 h-4 w-4" />
+                  View Data Tables
                 </Button>
               </div>
             </CardContent>
