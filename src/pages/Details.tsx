@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import VolatilityMetrics from '@/components/VolatilityMetrics';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, ChevronUp, ChevronDown, FileEdit } from 'lucide-react';
 import { fetchVolatilityMetrics, fetchStockData } from '@/utils/flaskConnector';
 
 const Details = () => {
@@ -32,6 +32,30 @@ const Details = () => {
   });
   
   useEffect(() => {
+    // Check if we have data in sessionStorage
+    const storedData = sessionStorage.getItem('volatilityData');
+    
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        if (parsedData.ticker === ticker) {
+          setStockData(parsedData.stockData);
+          setMetrics({
+            impliedVolatility: parsedData.impliedVolatility,
+            historicalVolatility: parsedData.historicalVolatility,
+            monteCarloSimulation: parsedData.monteCarloSimulation,
+            volatilityComparison: parsedData.volatilityComparison
+          });
+          setLoading(false);
+          toast.success(`Loaded ${ticker} data from your input`);
+          return;
+        }
+      } catch (error) {
+        console.error('Error parsing stored data:', error);
+      }
+    }
+    
+    // If no stored data or different ticker, load from API
     loadData();
   }, [ticker]);
   
@@ -58,11 +82,17 @@ const Details = () => {
   };
   
   const refreshData = () => {
+    // Clear sessionStorage on manual refresh
+    sessionStorage.removeItem('volatilityData');
     loadData();
   };
   
   const goBack = () => {
     navigate('/');
+  };
+  
+  const goToDataInput = () => {
+    navigate('/data-input');
   };
   
   const getPriceChangeColor = () => {
@@ -103,6 +133,16 @@ const Details = () => {
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={goToDataInput}
+              className="flex items-center gap-1"
+            >
+              <FileEdit className="h-4 w-4" />
+              Input Data
             </Button>
           </div>
           

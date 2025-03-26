@@ -1,174 +1,128 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from "sonner";
+import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowRight, Search, TrendingUp, LineChart, BarChart3, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Search, FileUp, TrendingUp } from 'lucide-react';
 
 const Home = () => {
   const [ticker, setTicker] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-
-  const popularTickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META'];
-
+  
+  const popularTickers = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA'];
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (ticker.trim()) {
-      setIsLoading(true);
-      toast.info(`Fetching data for ${ticker.toUpperCase()}...`);
-      // Simulate API call
-      setTimeout(() => {
-        setIsLoading(false);
-        navigate(`/details?ticker=${ticker.toUpperCase()}`);
-      }, 1000);
-    } else {
-      toast.error("Please enter a valid ticker symbol");
+    
+    if (!ticker.trim()) {
+      setError('Please enter a ticker symbol');
+      return;
     }
+    
+    navigate(`/details?ticker=${ticker.toUpperCase()}`);
   };
-
-  const selectPopularTicker = (selectedTicker: string) => {
-    setTicker(selectedTicker);
-    toast.info(`Selected ${selectedTicker}`);
+  
+  const handlePopularTicker = (symbol: string) => {
+    navigate(`/details?ticker=${symbol}`);
   };
-
+  
+  const goToDataInput = () => {
+    navigate('/data-input');
+  };
+  
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <main className="flex-1 container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-4xl md:text-5xl font-bold text-primary mb-4">
-              Volatility Metrics Analysis
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Track implied and historical volatility metrics for any publicly traded company
-            </p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Card className="shadow-lg border-secondary mb-12">
-              <CardHeader className="text-center bg-secondary/20 rounded-t-lg">
-                <CardTitle className="text-2xl font-bold text-primary">Volatility Metrics</CardTitle>
-                <CardDescription>
-                  Enter a stock ticker to view detailed implied and historical volatility metrics
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="space-y-2">
-                    <label htmlFor="ticker" className="text-sm font-medium">
-                      Stock Ticker
-                    </label>
-                    <div className="relative">
-                      <Input
-                        id="ticker"
-                        placeholder="e.g. AAPL, MSFT, GOOGL"
-                        value={ticker}
-                        onChange={(e) => setTicker(e.target.value)}
-                        className="pl-10"
-                        autoComplete="off"
-                      />
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    </div>
+      <main className="flex-1 container mx-auto px-4 py-12 flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-2xl text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-[#003366] to-[#055b49]">
+            Implied & Historical Volatility Metrics
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Analyze volatility metrics for any stock to make informed investment decisions
+          </p>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-md mb-8"
+        >
+          <Card className="border-2 border-primary/10 shadow-lg">
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+                    <input
+                      type="text"
+                      value={ticker}
+                      onChange={(e) => {
+                        setTicker(e.target.value.toUpperCase());
+                        setError('');
+                      }}
+                      placeholder="Enter stock ticker symbol (e.g., AAPL)"
+                      className="w-full pl-10 pr-4 py-3 rounded-md border border-input bg-background text-lg ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    />
                   </div>
-                  
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {popularTickers.map((t) => (
-                      <Button
-                        key={t}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => selectPopularTicker(t)}
-                        className="transition-all hover:bg-secondary hover:text-secondary-foreground"
-                      >
-                        {t}
-                      </Button>
-                    ))}
-                  </div>
-                  
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-accent hover:bg-accent/90"
-                    disabled={!ticker.trim() || isLoading}
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center">
-                        <span className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>
-                        Loading...
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        View Metrics
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </span>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                    <BarChart3 className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Implied Volatility</h3>
-                  <p className="text-muted-foreground">
-                    View expected future volatility derived from options pricing across different expirations
-                  </p>
-                </CardContent>
-              </Card>
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full py-6 text-lg bg-[#003366] hover:bg-[#003366]/80"
+                  size="lg"
+                >
+                  <TrendingUp className="mr-2 h-5 w-5" /> 
+                  Get Volatility Metrics
+                </Button>
+              </form>
               
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="h-12 w-12 rounded-full bg-secondary/30 flex items-center justify-center mb-4">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Monte Carlo Simulation</h3>
-                  <p className="text-muted-foreground">
-                    View price prediction models with statistical distribution of possible outcomes
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card className="hover:shadow-md transition-shadow">
-                <CardContent className="p-6 flex flex-col items-center text-center">
-                  <div className="h-12 w-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
-                    <LineChart className="h-6 w-6 text-accent" />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">Historical Analysis</h3>
-                  <p className="text-muted-foreground">
-                    Compare historical volatility metrics with market-implied expectations
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
-        </div>
+              <div className="mt-8">
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={goToDataInput}
+                >
+                  <FileUp className="mr-2 h-4 w-4" />
+                  Input Custom Data
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="w-full max-w-xl"
+        >
+          <h2 className="text-xl font-medium mb-4 text-center">Popular Tickers</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {popularTickers.map((symbol) => (
+              <Button
+                key={symbol}
+                variant="secondary"
+                onClick={() => handlePopularTicker(symbol)}
+                className="px-5 py-2 hover:bg-[#bdd7ee] hover:text-[#003366]"
+              >
+                {symbol}
+              </Button>
+            ))}
+          </div>
+        </motion.div>
       </main>
       
       <Footer />
