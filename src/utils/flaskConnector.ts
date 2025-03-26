@@ -6,7 +6,7 @@
  */
 
 // Update this when your Flask server is running
-const API_BASE_URL = 'http://localhost:5000';
+const API_BASE_URL = 'https://your-ngrok-url.ngrok.io';
 
 export interface StockData {
   ticker: string;
